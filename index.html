@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BusMate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="🚌">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #f1f1f1;
+            --card-color: #1e1e1e;
+            --button-color: #2c2c2c;
+        }
+
+        body.light {
+            --bg-color: #f1f1f1;
+            --text-color: #121212;
+            --card-color: #ffffff;
+            --button-color: #dddddd;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: var(--card-color);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        h1 span.icon {
+            background-color: white;
+            border-radius: 5px;
+            padding: 2px 5px;
+            margin-left: 5px;
+        }
+
+        select, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 5px;
+            border: none;
+            background: var(--button-color);
+            color: var(--text-color);
+        }
+
+        #bus-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .bus-item {
+            background: var(--button-color);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .theme-toggle {
+            float: right;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: -30px;
+            background: var(--button-color);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>BusMate <span class="icon">🚌</span>
+        <span class="theme-toggle" onclick="toggleTheme()">🌓</span>
+    </h1>
+
+    <label>Direction:</label>
+    <select id="direction" onchange="updateStops()">
+        <option value="To Junction">To Junction</option>
+        <option value="From Junction">From Junction</option>
+    </select>
+
+    <label>Your Location:</label>
+    <select id="stop"></select>
+
+    <label>Show:</label>
+    <select id="mode">
+        <option value="next">Next Bus</option>
+        <option value="next2hours">Buses for Next 2 Hours</option>
+        <option value="today">Buses for Today</option>
+    </select>
+
+    <button onclick="findBuses()">Find Buses</button>
+
+    <div id="bus-results"></div>
+    <p>Please reach the stop 5-10 minutes early.</p>
+</div>
+
+<script>
+const buses = [
+  { time: "7:45 AM", name: "VSB", type: "home" },
+  { time: "7:50 AM", name: "Government", type: "college" },
+  { time: "8:00 AM", name: "Balamithusha", type: "college" },
+  { time: "8:15 AM", name: "Ananth", type: "home" },
+  { time: "8:40 AM", name: "Government", type: "college" },
+  { time: "8:45 AM", name: "Government", type: "home" },
+  { time: "8:50 AM", name: "Antony", type: "home" },
+  { time: "9:00 AM", name: "Government", type: "home" },
+  { time: "9:10 AM", name: "Ananth", type: "college" },
+  { time: "10:20 AM", name: "Ananth", type: "home" },
+  { time: "10:25 AM", name: "VSB", type: "home" },
+  { time: "11:20 AM", name: "Ananth", type: "home" },
+  { time: "11:40 AM", name: "Antony", type: "college" },
+  { time: "12:15 PM", name: "Ananth", type: "home" },
+  { time: "12:30 PM", name: "Antony", type: "home" },
+  { time: "1:15 PM", name: "Ananth", type: "home" },
+  { time: "3:20 PM", name: "Government", type: "college" },
+  { time: "3:40 PM", name: "Antony", type: "home" },
+  { time: "4:10 PM", name: "Ananth", type: "home" },
+  { time: "4:50 PM", name: "Balamithusha", type: "home" },
+  { time: "5:00 PM", name: "VSB", type: "home" },
+  { time: "5:00 PM", name: "Government", type: "college" },
+  { time: "5:15 PM", name: "Ananth", type: "college" },
+  { time: "5:15 PM", name: "Antony", type: "home" },
+  { time: "5:20 PM", name: "Government", type: "home" },
+  { time: "5:45 PM", name: "Balamithusha", type: "college" },
+  { time: "6:20 PM", name: "Ananth", type: "home" },
+  { time: "6:50 PM", name: "Balamithusha", type: "home" },
+  { time: "7:05 PM", name: "Ananth", type: "college" },
+  { time: "7:45 PM", name: "VSB", type: "home" },
+  { time: "8:00 PM", name: "Government", type: "home" }
+];
+
+function updateStops() {
+    const direction = document.getElementById("direction").value;
+    const stop = document.getElementById("stop");
+    stop.innerHTML = "";
+
+    let stops = [];
+    if (direction === "To Junction") {
+        stops = ["Perumalpuram (Church Stop)", "New Bustand", "Palai Bustand"];
+    } else {
+        stops = ["Palai Bustand", "New Bustand", "Vannarpettai"];
+    }
+
+    stops.forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.textContent = s;
+        stop.appendChild(option);
+    });
+}
+
+function parseTime(str) {
+    const d = new Date();
+    const [time, mod] = str.split(" ");
+    let [h, m] = time.split(":");
+    h = parseInt(h);
+    m = parseInt(m);
+    if (mod === "PM" && h !== 12) h += 12;
+    if (mod === "AM" && h === 12) h = 0;
+    d.setHours(h);
+    d.setMinutes(m);
+    d.setSeconds(0);
+    return d;
+}
+
+function adjustTime(bus, stop, direction) {
+    const baseTime = parseTime(bus.time);
+    let offset = 0;
+
+    if (direction === "To Junction") {
+        if (stop === "Perumalpuram (Church Stop)") offset = 0;
+        if (stop === "New Bustand") offset = 5;
+        if (stop === "Palai Bustand") offset = 10;
+    } else {
+        if (stop === "Palai Bustand") offset = 0;
+        if (stop === "New Bustand") offset = 20;
+        if (stop === "Vannarpettai") offset = 40;
+    }
+    baseTime.setMinutes(baseTime.getMinutes() + offset);
+    return baseTime;
+}
+
+function findBuses() {
+    const direction = document.getElementById("direction").value;
+    const stop = document.getElementById("stop").value;
+    const mode = document.getElementById("mode").value;
+    const now = new Date();
+    const results = document.getElementById("bus-results");
+    results.innerHTML = "";
+
+    const dirType = direction === "To Junction" ? "home" : "college";
+
+    let filteredBuses = buses
+        .filter(bus => bus.type === dirType)
+        .map(bus => {
+            const arrival = adjustTime(bus, stop, direction);
+            const minutes = Math.round((arrival - now) / 60000);
+            return { ...bus, arrival, minutes };
+        })
+        .filter(bus => bus.arrival >= now)
+        .sort((a, b) => a.arrival - b.arrival);
+
+    if (mode === "next") {
+        filteredBuses = filteredBuses.slice(0, 1);
+    } else if (mode === "next2hours") {
+        filteredBuses = filteredBuses.filter(bus => bus.minutes <= 120);
+    }
+
+    if (filteredBuses.length === 0) {
+        results.innerText = "No buses found.";
+    } else {
+        filteredBuses.forEach(bus => {
+            const timeStr = bus.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const div = document.createElement("div");
+            div.className = "bus-item";
+            div.innerText = `${bus.name} at ${timeStr} - arriving in ${bus.minutes} min.`;
+            results.appendChild(div);
+        });
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+}
+
+// Initialize stops on load
+updateStops();
+</script>
+</body>
+</html>
