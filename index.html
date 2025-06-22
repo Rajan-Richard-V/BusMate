@@ -7,13 +7,13 @@
     body {
       font-family: Arial, sans-serif;
       background-color: #121212;
-      color: #fff;
+      color: #ffffff;
       padding: 20px;
-      transition: all 0.4s ease;
+      transition: all 0.6s ease;
     }
     h1 {
       text-align: center;
-      color: #00ffc8;
+      color: #59eccc;
     }
     .container {
       max-width: 700px;
@@ -95,7 +95,12 @@
     If your exact location is not listed, kindly select the previous stop before your current position.
   </div>
 
-  <button onclick="findNextBus()">Find My Bus</button>
+  <select onchange="handleBusOption(this.value)">
+    <option value="">-- buses --</option>
+    <option value="next">next bus</option>
+    <option value="next2">Buses in Next 2 Hours</option>
+    <option value="today">All Buses Today</option>
+  </select>
 
   <div class="output" id="output">Hello, I am BusMate — ready to assist you. 🚀</div>
 </div>
@@ -137,67 +142,20 @@ const allBuses = [
   { time: "20:00", name: "Government", type: "college" }
 ];
 
-const stopOffsetsTo = { "Church Stop": 0, "New Bus Stand": 5, "Palai Bus Stand": 15 };
+const stopOffsetsTo = { "Perumalpuram (Church Stop)": 0, "New Bus Stand": 5, "Palai Bus Stand": 15 };
 const stopOffsetsFrom = { "Vannarpettai": 0, "Palai Bus Stand": 10, "New Bus Stand": 20 };
 
 function populateStops() {
   const dir = document.getElementById("directionSelect").value;
   const stopSelect = document.getElementById("stopSelect");
   stopSelect.innerHTML = "<option value=''>-- Select Location --</option>";
-
-  if (dir === "to") {
-    Object.keys(stopOffsetsTo).forEach(stop => {
-      const opt = document.createElement("option");
-      opt.value = stop;
-      opt.innerText = stop;
-      stopSelect.appendChild(opt);
-    });
-  } else if (dir === "from") {
-    Object.keys(stopOffsetsFrom).forEach(stop => {
-      const opt = document.createElement("option");
-      opt.value = stop;
-      opt.innerText = stop;
-      stopSelect.appendChild(opt);
-    });
-  }
-}
-
-function findNextBus() {
-  const dir = document.getElementById("directionSelect").value;
-  const stop = document.getElementById("stopSelect").value;
-  const output = document.getElementById("output");
-
-  if (!dir || !stop) {
-    output.innerText = "Please select both direction and location.";
-    return;
-  }
-
-  const offset = dir === "to" ? stopOffsetsTo[stop] : stopOffsetsFrom[stop];
-  const data = allBuses.filter(bus => bus.type === (dir === "to" ? "college" : "home"));
-
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const upcomingBuses = data
-    .map(bus => {
-      const [h, m] = bus.time.split(":").map(Number);
-      const baseMinutes = h * 60 + m + offset;
-      return { ...bus, adjustedTime: baseMinutes, diff: baseMinutes - nowMinutes };
-    })
-    .filter(bus => bus.diff >= 0)
-    .sort((a, b) => a.diff - b.diff);
-
-  if (upcomingBuses.length > 0) {
-    const nextBus = upcomingBuses[0];
-    const totalMinutes = nextBus.adjustedTime;
-    const hours = Math.floor(totalMinutes / 60) % 24;
-    const mins = totalMinutes % 60;
-
-    let message = `🚌 Next bus is ${nextBus.name} at ${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")} at ${stop}. Arriving in ${formatDiff(nextBus.diff)}. 🚶 Please reach the stop 5-10 minutes early.`;
-    output.innerText = message;
-  } else {
-    output.innerText = "No more buses available today. 🚶 Please reach the stop 5-10 minutes early.";
-  }
+  const stops = dir === "to" ? stopOffsetsTo : stopOffsetsFrom;
+  Object.keys(stops).forEach(stop => {
+    const opt = document.createElement("option");
+    opt.value = stop;
+    opt.innerText = stop;
+    stopSelect.appendChild(opt);
+  });
 }
 
 function formatDiff(diff) {
@@ -212,7 +170,73 @@ function formatDiff(diff) {
 function toggleTheme() {
   document.body.classList.toggle("light");
 }
+
+function handleBusOption(mode) {
+  if (!mode) return;
+
+  const dir = document.getElementById("directionSelect").value;
+  const stop = document.getElementById("stopSelect").value;
+  const output = document.getElementById("output");
+
+  if (!dir || !stop) {
+    output.innerText = "Please select both direction and location.";
+    return;
+  }
+
+  const offset = dir === "to" ? stopOffsetsTo[stop] : stopOffsetsFrom[stop];
+  const targetType = dir === "to" ? "college" : "home";
+
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const filtered = allBuses
+    .filter(bus => bus.type === targetType)
+    .map(bus => {
+      const [h, m] = bus.time.split(":").map(Number);
+      const busMins = h * 60 + m + offset;
+      return { ...bus, adjustedTime: busMins, diff: busMins - nowMinutes };
+    })
+    .filter(bus => bus.diff >= 0)
+    .sort((a, b) => a.diff - b.diff);
+
+  if (mode === "next") {
+    if (filtered.length === 0) {
+      output.innerText = "No more buses available today.";
+      return;
+    }
+    const next = filtered[0];
+    const hours = Math.floor(next.adjustedTime / 60) % 24;
+    const mins = next.adjustedTime % 60;
+    output.innerText = `🚌 Next bus is ${next.name} at ${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")} at ${stop}. Arriving in ${formatDiff(next.diff)}. 🚶 Please reach the stop 5-10 minutes early.`;
+  }
+
+  else if (mode === "next2") {
+    const within2hrs = filtered.filter(bus => bus.diff <= 120);
+    if (within2hrs.length === 0) {
+      output.innerText = "No buses in the next 2 hours.";
+    } else {
+      output.innerHTML = "<strong>🕑 Buses in Next 2 Hours:</strong><br>" + within2hrs.map(bus => {
+        const h = Math.floor(bus.adjustedTime / 60) % 24;
+        const m = bus.adjustedTime % 60;
+        return `• ${bus.name} at ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} (${formatDiff(bus.diff)})`;
+      }).join("<br>");
+    }
+  }
+
+  else if (mode === "today") {
+    if (filtered.length === 0) {
+      output.innerText = "No more buses today.";
+    } else {
+      output.innerHTML = "<strong>📅 Remaining Buses Today:</strong><br>" + filtered.map(bus => {
+        const h = Math.floor(bus.adjustedTime / 60) % 24;
+        const m = bus.adjustedTime % 60;
+        return `• ${bus.name} at ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} (${formatDiff(bus.diff)})`;
+      }).join("<br>");
+    }
+  }
+}
 </script>
 
 </body>
 </html>
+
