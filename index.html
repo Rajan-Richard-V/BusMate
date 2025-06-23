@@ -88,16 +88,16 @@
   </select>
 
   <label for="stopSelect">Your location:</label>
-  <select id="stopSelect">
+  <select id="stopSelect" onchange="refreshLastOption()">
     <option value="">-- Select Location --</option>
   </select>
   <div class="helper-text">
-    If your exact location is not listed, kindly select the previous stop before your current position.
+   <h3> If your exact location is not listed, kindly select the previous stop before your current position.</h3>
   </div>
 
   <select onchange="handleBusOption(this.value)">
     <option value="">-- buses --</option>
-    <option value="next">next bus</option>
+    <option value="next">Next Bus</option>
     <option value="next2">Buses in Next 2 Hours</option>
     <option value="today">All Buses Today</option>
   </select>
@@ -142,13 +142,23 @@ const allBuses = [
   { time: "20:00", name: "Government", type: "college" }
 ];
 
-const stopOffsetsTo = { "Perumalpuram (Church Stop)": 0, "New Bus Stand": 5, "Palai Bus Stand": 15 };
-const stopOffsetsFrom = { "Vannarpettai": 0, "Palai Bus Stand": 10, "New Bus Stand": 20 };
+const stopOffsetsTo = {
+  "Church Stop": 0,
+  "New Bus Stand": 5,
+  "Palai Bus Stand": 15
+};
+
+const stopOffsetsFrom = {
+  "Vannarpettai": 0,
+  "Palai Bus Stand": 10,
+  "New Bus Stand": 20
+};
 
 function populateStops() {
   const dir = document.getElementById("directionSelect").value;
   const stopSelect = document.getElementById("stopSelect");
   stopSelect.innerHTML = "<option value=''>-- Select Location --</option>";
+
   const stops = dir === "to" ? stopOffsetsTo : stopOffsetsFrom;
   Object.keys(stops).forEach(stop => {
     const opt = document.createElement("option");
@@ -156,19 +166,6 @@ function populateStops() {
     opt.innerText = stop;
     stopSelect.appendChild(opt);
   });
-}
-
-function formatDiff(diff) {
-  if (diff >= 60) {
-    const h = Math.floor(diff / 60);
-    const m = diff % 60;
-    return `${h} hr ${m} min`;
-  }
-  return `${diff} min`;
-}
-
-function toggleTheme() {
-  document.body.classList.toggle("light");
 }
 
 function handleBusOption(mode) {
@@ -235,7 +232,37 @@ function handleBusOption(mode) {
     }
   }
 }
+
+function formatDiff(diff) {
+  if (diff >= 60) {
+    const h = Math.floor(diff / 60);
+    const m = diff % 60;
+    return `${h} hr ${m} min`;
+  }
+  return `${diff} min`;
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("light");
+}
+let lastMode = "";
+
+function handleBusOption(mode) {
+  lastMode = mode; // Store the last used mode
+  // ... existing logic (already included in your final code)
+}
+
+function refreshLastOption() {
+  if (lastMode) {
+    handleBusOption(lastMode);
+  }
+}
+
 </script>
+
+</body>
+</html>
+
 
 </body>
 </html>
