@@ -1,268 +1,174 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BusMate</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BusMate 🚌</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #121212;
-      color: #ffffff;
-      padding: 20px;
-      transition: all 0.6s ease;
-    }
-    h1 {
-      text-align: center;
-      color: #59eccc;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
     }
     .container {
-      max-width: 700px;
-      margin: auto;
-      background-color: #1f1f1f;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,255,200,0.3);
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 255, 128, 0.2);
+      width: 90%;
+      max-width: 600px;
     }
     select, button {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       margin: 10px 0;
-      font-size: 18px;
-      border-radius: 10px;
+      border-radius: 5px;
       border: none;
     }
     .output {
       margin-top: 20px;
-      font-size: 20px;
-      background-color: #2a2a2a;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,255,200,0.2);
-      transition: all 0.4s ease;
-    }
-    .light {
-      background-color: #f0f0f0;
-      color: #000;
-    }
-    .light .container {
-      background-color: #fff;
-      color: #000;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .light .output {
-      background-color: #e0e0e0;
-      color: #000;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
-    }
-    .theme-switch {
-      float: right;
       padding: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      border-radius: 10px;
-      border: none;
+      background: #2c2c2c;
+      border-radius: 8px;
     }
-    .helper-text {
-      font-size: 14px;
-      color: #ccc;
-      margin-top: -8px;
-      margin-bottom: 12px;
-    }
-    .light .helper-text {
-      color: #666;
+    .bus-item {
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
-
-<div class="container">
-  <h1>BusMate 🚍</h1>
-
-  <button class="theme-switch" onclick="toggleTheme()">Toggle Theme 🌗</button>
-
-  <label for="directionSelect">Select direction:</label>
-  <select id="directionSelect" onchange="populateStops()">
-    <option value="">-- Select Direction --</option>
-    <option value="to">To Junction</option>
-    <option value="from">From Junction</option>
-  </select>
-
-  <label for="stopSelect">Your location:</label>
-  <select id="stopSelect" onchange="refreshLastOption()">
-    <option value="">-- Select Location --</option>
-  </select>
-  <div class="helper-text">
-   <h3> If your exact location is not listed, kindly select the previous stop before your current position.</h3>
+  <div class="container">
+    <h1>BusMate 🚌</h1>
+    <button onclick="toggleTheme()">Toggle Theme 🌓</button>
+    <label>Select direction:</label>
+    <select id="directionSelect" onchange="refreshLastOption()">
+      <option>To Junction</option>
+      <option>From Junction</option>
+    </select>
+    <label>Your location:</label>
+    <select id="stopSelect" onchange="refreshLastOption()">
+      <option>Perumalpuram (Church Stop)</option>
+      <option>New Bus Stand</option>
+      <option>Palai Bus Stand</option>
+      <option>Vannarpettai</option>
+    </select>
+    <select onchange="handleBusOption(this.value)">
+      <option value="next">Next Bus</option>
+      <option value="2hr">Buses in Next 2 Hours</option>
+      <option value="all">All Buses Today</option>
+    </select>
+    <div id="output" class="output">
+      Hello, I am BusMate — ready to assist you. 🚀
+    </div>
   </div>
 
-  <select onchange="handleBusOption(this.value)">
-    <option value="">-- buses --</option>
-    <option value="next">Next Bus</option>
-    <option value="next2">Buses in Next 2 Hours</option>
-    <option value="today">All Buses Today</option>
-  </select>
+  <script>
+    const buses = [
+      { name: "Antony", time: "11:40" },
+      { name: "Balamithusha", time: "13:00" },
+      { name: "Balamithusha", time: "14:55" },
+      { name: "Government", time: "15:20" },
+      { name: "Government", time: "17:00" },
+      { name: "Ananth", time: "17:15" },
+      { name: "Balamithusha", time: "17:45" },
+      { name: "Ananth", time: "19:05" },
+      { name: "Government", time: "20:00" },
+      { name: "Ananth", time: "11:20" },
+      { name: "Ananth", time: "12:15" },
+      { name: "Antony", time: "12:30" },
+      { name: "Ananth", time: "13:15" },
+      { name: "Antony", time: "15:40" },
+      { name: "Ananth", time: "16:10" },
+      { name: "Balamithusha", time: "16:50" },
+      { name: "VSB", time: "17:00" },
+      { name: "Antony", time: "17:15" },
+      { name: "Government", time: "17:20" },
+      { name: "Ananth", time: "18:20" },
+      { name: "Balamithusha", time: "18:50" },
+      { name: "VSB", time: "19:45" }
+    ];
 
-  <div class="output" id="output">Hello, I am BusMate — ready to assist you. 🚀</div>
-</div>
+    let lastMode = "";
 
-<script>
-const allBuses = [
-  { time: "07:45", name: "VSB", type: "home" },
-  { time: "07:50", name: "Government", type: "college" },
-  { time: "08:00", name: "Balamithusha", type: "college" },
-  { time: "08:15", name: "Ananth", type: "home" },
-  { time: "08:40", name: "Government", type: "college" },
-  { time: "08:45", name: "Government", type: "home" },
-  { time: "08:50", name: "Antony", type: "home" },
-  { time: "09:00", name: "Government", type: "home" },
-  { time: "09:10", name: "Ananth", type: "college" },
-  { time: "10:20", name: "Ananth", type: "home" },
-  { time: "10:25", name: "VSB", type: "home" },
-  { time: "11:20", name: "Ananth", type: "home" },
-  { time: "11:40", name: "Antony", type: "college" },
-  { time: "12:15", name: "Ananth", type: "home" },
-  { time: "12:30", name: "Antony", type: "home" },
-  { time: "13:00", name: "Balamithusha", type: "college" },
-  { time: "13:15", name: "Ananth", type: "home" },
-  { time: "14:55", name: "Balamithusha", type: "college" },
-  { time: "15:20", name: "Government", type: "college" },
-  { time: "15:40", name: "Antony", type: "home" },
-  { time: "16:10", name: "Ananth", type: "home" },
-  { time: "16:50", name: "Balamithusha", type: "home" },
-  { time: "17:00", name: "VSB", type: "home" },
-  { time: "17:00", name: "Government", type: "college" },
-  { time: "17:15", name: "Ananth", type: "college" },
-  { time: "17:15", name: "Antony", type: "home" },
-  { time: "17:20", name: "Government", type: "home" },
-  { time: "17:45", name: "Balamithusha", type: "college" },
-  { time: "18:20", name: "Ananth", type: "home" },
-  { time: "18:50", name: "Balamithusha", type: "home" },
-  { time: "19:05", name: "Ananth", type: "college" },
-  { time: "19:45", name: "VSB", type: "home" },
-  { time: "20:00", name: "Government", type: "college" }
-];
-
-const stopOffsetsTo = {
-  "Church Stop": 0,
-  "New Bus Stand": 5,
-  "Palai Bus Stand": 15
-};
-
-const stopOffsetsFrom = {
-  "Vannarpettai": 0,
-  "Palai Bus Stand": 10,
-  "New Bus Stand": 20
-};
-
-function populateStops() {
-  const dir = document.getElementById("directionSelect").value;
-  const stopSelect = document.getElementById("stopSelect");
-  stopSelect.innerHTML = "<option value=''>-- Select Location --</option>";
-
-  const stops = dir === "to" ? stopOffsetsTo : stopOffsetsFrom;
-  Object.keys(stops).forEach(stop => {
-    const opt = document.createElement("option");
-    opt.value = stop;
-    opt.innerText = stop;
-    stopSelect.appendChild(opt);
-  });
-}
-
-function handleBusOption(mode) {
-  if (!mode) return;
-
-  const dir = document.getElementById("directionSelect").value;
-  const stop = document.getElementById("stopSelect").value;
-  const output = document.getElementById("output");
-
-  if (!dir || !stop) {
-    output.innerText = "Please select both direction and location.";
-    return;
-  }
-
-  const offset = dir === "to" ? stopOffsetsTo[stop] : stopOffsetsFrom[stop];
-  const targetType = dir === "to" ? "college" : "home";
-
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const filtered = allBuses
-    .filter(bus => bus.type === targetType)
-    .map(bus => {
-      const [h, m] = bus.time.split(":").map(Number);
-      const busMins = h * 60 + m + offset;
-      return { ...bus, adjustedTime: busMins, diff: busMins - nowMinutes };
-    })
-    .filter(bus => bus.diff >= 0)
-    .sort((a, b) => a.diff - b.diff);
-
-  if (mode === "next") {
-    if (filtered.length === 0) {
-      output.innerText = "No more buses available today.";
-      return;
+    function toggleTheme() {
+      document.body.classList.toggle("light");
     }
-    const next = filtered[0];
-    const hours = Math.floor(next.adjustedTime / 60) % 24;
-    const mins = next.adjustedTime % 60;
-    output.innerText = `🚌 Next bus is ${next.name} at ${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")} at ${stop}. Arriving in ${formatDiff(next.diff)}. 🚶 Please reach the stop 5-10 minutes early.`;
-  }
 
-  else if (mode === "next2") {
-    const within2hrs = filtered.filter(bus => bus.diff <= 120);
-    if (within2hrs.length === 0) {
-      output.innerText = "No buses in the next 2 hours.";
-    } else {
-      output.innerHTML = "<strong>🕑 Buses in Next 2 Hours:</strong><br>" + within2hrs.map(bus => {
-        const h = Math.floor(bus.adjustedTime / 60) % 24;
-        const m = bus.adjustedTime % 60;
-        return `• ${bus.name} at ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} (${formatDiff(bus.diff)})`;
-      }).join("<br>");
+    function handleBusOption(mode) {
+      lastMode = mode;
+      const direction = document.getElementById("directionSelect").value;
+      const stop = document.getElementById("stopSelect").value;
+      const now = new Date();
+      const upcoming = [];
+
+      buses.forEach(bus => {
+        const [h, m] = bus.time.split(":").map(Number);
+        const time = new Date();
+        time.setHours(h);
+        time.setMinutes(m);
+        time.setSeconds(0);
+
+        if (direction === "To Junction") {
+          if (stop === "New Bus Stand") time.setMinutes(time.getMinutes() + 5);
+          if (stop === "Palai Bus Stand") time.setMinutes(time.getMinutes() + 15);
+        } else {
+          if (stop === "Palai Bus Stand") time.setMinutes(time.getMinutes() + 10);
+          if (stop === "New Bus Stand") time.setMinutes(time.getMinutes() + 20);
+        }
+
+        const diff = (time - now) / 60000;
+        if (diff >= 0) {
+          upcoming.push({ ...bus, adjustedTime: time, diff: Math.floor(diff) });
+        }
+      });
+
+      let filtered = [];
+      if (mode === "next") {
+        filtered = upcoming.slice(0, 1);
+      } else if (mode === "2hr") {
+        filtered = upcoming.filter(b => b.diff <= 120);
+      } else {
+        filtered = upcoming;
+      }
+
+      displayBuses(filtered);
     }
-  }
 
-  else if (mode === "today") {
-    if (filtered.length === 0) {
-      output.innerText = "No more buses today.";
-    } else {
-      output.innerHTML = "<strong>📅 Remaining Buses Today:</strong><br>" + filtered.map(bus => {
-        const h = Math.floor(bus.adjustedTime / 60) % 24;
-        const m = bus.adjustedTime % 60;
-        return `• ${bus.name} at ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} (${formatDiff(bus.diff)})`;
-      }).join("<br>");
+    function displayBuses(busList) {
+      const output = document.getElementById("output");
+      if (busList.length === 0) {
+        output.innerHTML = "🕓 No buses found for the selected time.";
+        return;
+      }
+
+      let html = "📅 <strong>Remaining Buses Today:</strong><br>";
+      busList.forEach(bus => {
+        const h = bus.adjustedTime.getHours().toString().padStart(2, '0');
+        const m = bus.adjustedTime.getMinutes().toString().padStart(2, '0');
+        const hr = Math.floor(bus.diff / 60);
+        const min = bus.diff % 60;
+        const timeStr = hr > 0 ? `${hr} hr ${min} min` : `${min} min`;
+        html += `• ${bus.name} at ${h}:${m} (${timeStr})<br>`;
+      });
+
+      output.innerHTML = html;
     }
-  }
-}
 
-function formatDiff(diff) {
-  if (diff >= 60) {
-    const h = Math.floor(diff / 60);
-    const m = diff % 60;
-    return `${h} hr ${m} min`;
-  }
-  return `${diff} min`;
-}
-
-function toggleTheme() {
-  document.body.classList.toggle("light");
-}
-let lastMode = "";
-
-function handleBusOption(mode) {
-  lastMode = mode; // Store the last used mode
-  // ... existing logic (already included in your final code)
-}
-
-function refreshLastOption() {
-  if (lastMode) {
-    handleBusOption(lastMode);
-  }
-}
-
-</script>
-
+    function refreshLastOption() {
+      if (lastMode) {
+        handleBusOption(lastMode);
+      }
+    }
+  </script>
 </body>
 </html>
-
 
 </body>
 </html>
